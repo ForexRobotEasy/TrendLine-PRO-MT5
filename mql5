@@ -1,0 +1,89 @@
+
+// +------------------------------------------------------------------+
+// |               TrendLine PRO MT5                                  |
+// |               Developer's Site: forexroboteasy.com               |
+// |               Development by: Forex Robot Easy Team              |
+// +------------------------------------------------------------------+
+
+// Include necessary libraries and define constants
+
+#include <Trade\Trade.mqh>
+
+#define TAKE_PROFIT_RATIO 2       // Ratio for calculating the Take Profit level
+#define STOP_LOSS_RATIO 1         // Ratio for calculating the Stop Loss level
+
+//+------------------------------------------------------------------+
+//|                        Expert initialization function           |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Initialize trade functions
+    Trade.Init();
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//|                        Expert deinitialization function         |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Clean up trade functions
+    Trade.Deinit();
+}
+
+//+------------------------------------------------------------------+
+//|                      Expert tick function                        |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Check for trend change alerts and entry point indicators
+    if (TrendLinePRO.CheckTrendChangeAlerts() && TrendLinePRO.CheckEntryPoints())
+    {
+        // Get current symbol and its bid and ask prices
+        string symbol = Symbol();
+        double bid = SymbolInfoDouble(symbol, SYMBOL_BID);
+        double ask = SymbolInfoDouble(symbol, SYMBOL_ASK);
+
+        // Calculate the Take Profit and Stop Loss levels
+        double takeProfitLevel = bid + (ask - bid) * TAKE_PROFIT_RATIO;
+        double stopLossLevel = bid - (ask - bid) * STOP_LOSS_RATIO;
+
+        // Open a trade with calculated levels
+        Trade.SendOrder(
+            symbol,
+            TRADE_ACTION_DEAL,
+            TRADE_ORDER_TYPE_BUY,
+            0.01,
+            0.0,
+            0,
+            ask,
+            stopLossLevel,
+            takeProfitLevel
+        );
+    }
+}
+
+//+------------------------------------------------------------------+
+//|                       Expert start function                      |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    // Start the expert advisor
+    while (!IsStopped())
+    {
+        OnTick();
+        Sleep(1000);  // Delay between ticks
+    }
+}
+
+//+------------------------------------------------------------------+
+//|                    Expert program termination function           |
+//+------------------------------------------------------------------+
+void OnTerminate()
+{
+    // Clean up trade functions
+    Trade.Deinit();
+}
+
+//+------------------------------------------------------------------+
